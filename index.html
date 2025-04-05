@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qur'an Digital</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Scheherazade+New&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+    }
+    body {
+      background: #f8f8f8;
+      color: #333;
+    }
+    header {
+      background: #0d7b4c;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .tab {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      margin-top: -10px;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      color: #0d7b4c;
+    }
+    .sura-list, .sura-detail {
+      list-style: none;
+      padding: 1rem;
+    }
+    .sura-item {
+      background: white;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s ease;
+      cursor: pointer;
+    }
+    .sura-item:hover {
+      background: #f1f1f1;
+    }
+    .sura-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .sura-info strong {
+      font-size: 1rem;
+    }
+    .sura-info span {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .sura-arab {
+      font-family: 'Scheherazade New', serif;
+      font-size: 1.2rem;
+    }
+    .ayat-box {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #f5f5f5;
+      border-radius: 10px;
+      position: relative;
+    }
+    .ayat-text {
+      font-family: 'Scheherazade New', serif;
+      font-size: 1.5rem;
+      text-align: right;
+    }
+    .ayat-text span.ayat-nomor {
+      display: inline-block;
+      background: #0d7b4c;
+      color: white;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 50%;
+      margin-left: 0.5rem;
+    }
+    .ayat-terjemahan {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      color: #444;
+    }
+    .back-button {
+      display: inline-block;
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      background: #0d7b4c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    body.dark .sura-item {
+      background: #1e1e1e;
+      border-color: #333;
+    }
+    body.dark .tab {
+      background: #1c1c1c;
+      color: #aaffaa;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <h1>Al-Quran Digital</h1>
+    </div>
+  </header>
+
+  <div class="tab">Daftar Surat</div>
+  <ul class="sura-list" id="surahList"></ul>
+  <div class="sura-detail" id="surahDetail" style="display:none;"></div>
+
+  <script>
+    let allSurah = [];
+
+    async function loadSurah() {
+      try {
+        const res = await fetch('https://equran.id/api/v2/surat');
+        const data = await res.json();
+        allSurah = data.data;
+        renderSurahList(allSurah);
+      } catch (err) {
+        console.error('Gagal memuat surah:', err);
+      }
+    }
+
+    function toArabicNumber(num) {
+      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      return num.toString().split('').map(d => arabicDigits[+d]).join('');
+    }
+
+    function renderSurahList(data) {
+      const list = document.getElementById('surahList');
+      list.innerHTML = '';
+      data.forEach(surah => {
+        const li = document.createElement('li');
+        li.className = 'sura-item';
+        li.innerHTML = `
+          <div class="sura-info">
+            <strong>${surah.namaLatin} (${surah.nomor})</strong>
+            <span>${surah.arti} (${surah.jumlahAyat} Ayat)</span>
+          </div>
+          <div class="sura-arab">${surah.nama}</div>
+        `;
+        li.onclick = () => showSurahDetail(surah.nomor);
+        list.appendChild(li);
+      });
+    }
+
+    async function showSurahDetail(number) {
+      try {
+        const res = await fetch(`https://equran.id/api/v2/surat/${number}`);
+        const data = await res.json();
+        const surah = data.data;
+
+        document.getElementById('surahList').style.display = 'none';
+        const detail = document.getElementById('surahDetail');
+        detail.style.display = 'block';
+
+        let ayatHtml = '';
+        surah.ayat.forEach(ayat => {
+          const teksArab = ayat.teksArab.replace(/[\u06d6-\u06ed]/g, '');
+          ayatHtml += `
+            <div class="ayat-box">
+              <div class="ayat-text">
+                ${teksArab} <span class="ayat-nomor">${toArabicNumber(ayat.nomorAyat)}</span>
+              </div>
+              <div class="ayat-terjemahan">${ayat.teksIndonesia}</div>
+            </div>
+          `;
+        });
+
+        detail.innerHTML = `
+          <button class="back-button" onclick="backToList()">⬅️ Kembali</button>
+          <h2>${surah.namaLatin} (${surah.nama})</h2>
+          <p><strong>Terjemahan:</strong> ${surah.arti}</p>
+          <p><strong>Jumlah Ayat:</strong> ${surah.jumlahAyat}</p>
+          <p><strong>Asbabun Nuzul:</strong><br>${surah.deskripsi || 'Tidak tersedia.'}</p>
+          <hr>
+          ${ayatHtml}
+        `;
+      } catch (err) {
+        console.error('Gagal memuat detail surah:', err);
+      }
+    }
+
+    function backToList() {
+      document.getElementById('surahList').style.display = 'block';
+      document.getElementById('surahDetail').style.display = 'none';
+    }
+
+    loadSurah();
+  </script>
+</body>
+</html>
