@@ -11,7 +11,7 @@ Qur'an Mobile UI adalah aplikasi Al-Qur'an digital dengan tampilan seperti aplik
 - ✅ Terjemahan Bahasa Indonesia
 - ✅ Asbabun Nuzul (jika tersedia)
 - ✅ Desain responsif seperti aplikasi mobile
-- ✅ Dark mode mengikuti sistem
+- ✅ Sistem menggunakan Single Page sehinggal tidak perlu *reload*
 
 ---
 
